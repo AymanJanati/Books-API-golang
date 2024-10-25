@@ -104,8 +104,34 @@ func listBooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limitstr := r.URL.Query().Get("limit")
+	offsetstr := r.URL.Query().Get("offset")
+
+	if limitstr == "" || offsetstr == "" {
+		http.Error(w, "Invalide input: limit and offset missing", http.StatusBadRequest)
+		return
+	}
+
+	l, err := strconv.Atoi(limitstr)
+	if err != nil || l <= 0 {
+		http.Error(w, "Invalide input: limite must be positive.", http.StatusBadRequest)
+		return
+	}
+	of, err := strconv.Atoi(offsetstr)
+	if err != nil || of < 0 {
+		http.Error(w, "Invalide input: offset must be non-negative", http.StatusBadRequest)
+		return
+	}
+
+	end := of + l
+	if end > len(Books) {
+		end = len(Books)
+	}
+
+	retBooks := Books[of:end]
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Books)
+	json.NewEncoder(w).Encode(retBooks)
 }
 
 func main() {
