@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -106,6 +107,11 @@ func listBooks(w http.ResponseWriter, r *http.Request) {
 
 	limitstr := r.URL.Query().Get("limit")
 	offsetstr := r.URL.Query().Get("offset")
+	sortBy := r.URL.Query().Get("sort")
+	if sortBy == "" {
+		http.Error(w, "Invalide input: no sorting type", http.StatusBadRequest)
+		return
+	}
 
 	if limitstr == "" || offsetstr == "" {
 		http.Error(w, "Invalide input: limit and offset missing", http.StatusBadRequest)
@@ -121,6 +127,18 @@ func listBooks(w http.ResponseWriter, r *http.Request) {
 	if err != nil || of < 0 {
 		http.Error(w, "Invalide input: offset must be non-negative", http.StatusBadRequest)
 		return
+	}
+
+	if sortBy == "title" {
+		sort.Slice(Books, func(i, j int) bool {
+			return Books[i].Title < Books[j].Title
+		})
+	} else if sortBy == "author" {
+		sort.Slice(Books, func(i, j int) bool {
+			return Books[i].Author < Books[j].Author
+		})
+	} else {
+		http.Error(w, "Invalide input: sorting type invalide", http.StatusBadRequest)
 	}
 
 	end := of + l
@@ -143,7 +161,7 @@ func main() {
 		}
 	})
 	http.HandleFunc("/books/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
+		if r.Method == http.MethodPut {
 			updateBook(w, r)
 		} else {
 			deleteBook(w, r)
