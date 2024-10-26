@@ -14,6 +14,7 @@ type Book struct {
 	Author string `json:"author"`
 }
 
+// this comment is recently added by admiral-simo
 var Books = []Book{}
 var idCounter int = 1
 
